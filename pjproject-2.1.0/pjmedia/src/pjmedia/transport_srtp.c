@@ -71,6 +71,14 @@ static crypto_suite crypto_suites[] = {
     /* plain RTP/RTCP (no cipher & no auth) */
     {"NULL", NULL_CIPHER, 0, NULL_AUTH, 0, 0, 0, sec_serv_none},
 
+    /* cipher AES_GCM, NULL auth, auth tag len = 16 octets */
+    {"AEAD_AES_256_GCM", AES_256_GCM, AES_256_GCM_KEYSIZE_WSALT, 
+	NULL_AUTH, 0, 16, 16, sec_serv_conf_and_auth},
+
+    /* cipher AES_GCM, NULL auth, auth tag len = 16 octets */
+    {"AEAD_AES_128_GCM", AES_128_GCM, AES_128_GCM_KEYSIZE_WSALT, 
+	NULL_AUTH, 0, 16, 16, sec_serv_conf_and_auth},
+
     /* cipher AES_GCM, NULL auth, auth tag len = 8 octets */
     {"AEAD_AES_256_GCM_8", AES_256_GCM, AES_256_GCM_KEYSIZE_WSALT, 
 	NULL_AUTH, 0, 8, 8, sec_serv_conf_and_auth},
