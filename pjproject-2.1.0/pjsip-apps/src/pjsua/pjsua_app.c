@@ -289,7 +289,8 @@ static void usage(void)
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
     puts  ("");
     puts  ("TLS Options:");
-    puts  ("  --use-tls           Enable TLS transport (default=no)");
+    puts  ("  --use-tls           Enable TLS 1.0 transport (default=no)");
+    puts  ("  --use-tls-all       Enable TLS (all) transport (default=no)");
     puts  ("  --tls-ca-file       Specify TLS CA file (default=none)");
     puts  ("  --tls-cert-file     Specify TLS certificate file (default=none)");
     puts  ("  --tls-privkey-file  Specify TLS private key file (default=none)");
@@ -584,7 +585,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	   OPT_NEXT_ACCOUNT, OPT_NEXT_CRED, OPT_MAX_CALLS, 
 	   OPT_DURATION, OPT_NO_TCP, OPT_NO_UDP, OPT_THREAD_CNT,
 	   OPT_NOREFERSUB, OPT_ACCEPT_REDIRECT,
-	   OPT_USE_TLS, OPT_TLS_CA_FILE, OPT_TLS_CERT_FILE, OPT_TLS_PRIV_FILE,
+	   OPT_USE_TLS, OPT_USE_TLS12, OPT_TLS_CA_FILE, OPT_TLS_CERT_FILE, OPT_TLS_PRIV_FILE,
 	   OPT_TLS_PASSWORD, OPT_TLS_VERIFY_SERVER, OPT_TLS_VERIFY_CLIENT,
 	   OPT_TLS_NEG_TIMEOUT, OPT_TLS_CIPHER,
 	   OPT_CAPTURE_DEV, OPT_PLAYBACK_DEV,
@@ -691,6 +692,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	{ "thread-cnt",	1, 0, OPT_THREAD_CNT},
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
 	{ "use-tls",	0, 0, OPT_USE_TLS}, 
+	{ "use-tls-all",0, 0, OPT_USE_TLS12}, 
 	{ "tls-ca-file",1, 0, OPT_TLS_CA_FILE},
 	{ "tls-cert-file",1,0, OPT_TLS_CERT_FILE}, 
 	{ "tls-privkey-file",1,0, OPT_TLS_PRIV_FILE},
@@ -1398,6 +1400,15 @@ static pj_status_t parse_args(int argc, char *argv[],
 	    cfg->use_tls = PJ_TRUE;
 	    break;
 	    
+	case OPT_USE_TLS12:
+	    /* 
+	     * Enable TLS using the full suite of TLS versions
+	     * Otherwise only TLS 1.0 will be used by default
+	     */
+	    cfg->use_tls = PJ_TRUE;
+	    cfg->udp_cfg.tls_setting.method = PJSIP_SSLV23_METHOD;
+	    break;
+	    
 	case OPT_TLS_CA_FILE:
 	    cfg->udp_cfg.tls_setting.ca_list_file = pj_str(pj_optarg);
 	    break;
@@ -1967,8 +1978,13 @@ static int write_settings(const struct app_config *config,
 
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
     /* TLS */
-    if (config->use_tls)
-	pj_strcat2(&cfg, "--use-tls\n");
+    if (config->use_tls) {
+	if (config->udp_cfg.tls_setting.method == PJSIP_SSLV23_METHOD) {
+	    pj_strcat2(&cfg, "--use-tls-all\n");
+	} else {
+	    pj_strcat2(&cfg, "--use-tls\n");
+	}
+    }
     if (config->udp_cfg.tls_setting.ca_list_file.slen) {
 	pj_ansi_sprintf(line, "--tls-ca-file %.*s\n",
 			(int)config->udp_cfg.tls_setting.ca_list_file.slen, 
